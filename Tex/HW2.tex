@@ -1,0 +1,588 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc} % Para caracteres en español
+\usepackage{amsmath,amsthm,amsfonts,amssymb,amscd}
+\usepackage{multirow,booktabs}
+\usepackage[table]{xcolor}
+\usepackage{fullpage}
+\usepackage{lastpage}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{mathrsfs}
+\usepackage{pdfpages}
+\usepackage{wrapfig}
+\usepackage{setspace}
+\usepackage{esvect}
+\usepackage{calc}
+\usepackage{multicol}
+\usepackage{cancel}
+\usepackage{graphicx}
+\graphicspath{ {pictures/} }
+\usepackage[retainorgcmds]{IEEEtrantools}
+\usepackage[margin=3cm]{geometry}
+\usepackage{amsmath}
+\newlength{\tabcont}
+\setlength{\parindent}{0.0in}
+\setlength{\parskip}{0.05in}
+\usepackage{empheq}
+\usepackage{framed}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\colorlet{shadecolor}{orange!15}
+\parindent 0in
+\parskip 12pt
+\geometry{margin=1in, headsep=0.25in}
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}
+\newtheorem{reg}{Rule}
+\newtheorem{exer}{Exercise}
+% Two more packages that make it easy to show MATLAB code
+\usepackage[T1]{fontenc}
+\usepackage[framed,numbered]{matlab-prettifier}
+\lstset{
+	style = Matlab-editor,
+	basicstyle=\mlttfamily\small,
+}
+\newtheorem{note}{Note}
+\begin{document}  
+\setcounter{section}{0}
+\thispagestyle{empty}
+
+\begin{center}
+{\LARGE \bf Homework 2}\\
+{\large AE402 - Fall 2018 \\ Emilio R. Gordon}
+\end{center}
+\vspace{1mm}
+\textbf{Textbook Problem 2.3:} A satellite is in an elliptic orbit with $e=0.5$. Using a starting value of
+$E_0 = M$, determine the value of E to an accuracy of $10^-4$ radians at the
+time the satellite is one-quarter period past periapses passage. List all
+iterations including the value of $F(E)$ by:
+
+\begin{framed}
+\textbf{Constants Defined}
+\begin{equation*}
+\begin{aligned}
+\mu_{\text{Earth}} &= 3.9860044188 \times 10^5 \, [km^3 s^{-2}] \\
+e &= 0.5 \\
+M &= n \, (t-t_p) \text{ and we know }(t-t_p) = \frac{T}{4} \text{ and } n = \frac{2 \, \pi}{T}\\
+M &= \frac{\pi}{2} \, [rad]
+\end{aligned}
+\end{equation*}
+\end{framed}
+
+\begin{enumerate}
+\item \textcolor{red}{using the Newton algorithm}
+
+\begin{center}
+ \begin{tabular}{||c | c||} 
+ \hline
+ Iterations & Eccentric Anomaly Assumption \\ [0.5ex] 
+ \hline\hline
+ 0        &   1.5707963267949 \\
+                         1     &      2.0707963267949 \\
+                         2     &     2.02142301987214 \\
+                         3     &     2.02097997437267 \\
+ \hline
+\end{tabular}
+\end{center}
+
+\begin{lstlisting}
+function [counter, values] = KeplersEqnNewtonMethod(M,e,E_0,tol)
+x = E_0; i=0;
+counter = [i];
+values = [x];
+    while abs(fn(M,x,e))>tol
+        dx = -fn(M,x,e)/fnp(M,x,e);
+        i=i+1;
+        x = x+dx;
+        counter = [counter; i];
+        values = [values;x];
+    end
+end
+
+%% Background Functions
+function f = fn(M,En,e)
+% Evaluate the given function.
+ f = M-(En-e*sin(En));
+end
+
+function fp = fnp(M,En,e)
+% Evaluate the derivative of the given function.
+ fp = -1 + e*cos(En);
+end
+\end{lstlisting}
+\newpage
+\item \textcolor{red}{using the Laguerre algorithm (2.43)}
+
+\begin{center}
+ \begin{tabular}{||c | c||} 
+ \hline
+ Iterations & Eccentric Anomaly Assumption \\ [0.5ex] 
+ \hline\hline
+0       &    1.5707963267949 \\
+                         1    &       2.0707963267949 \\
+                         2    &      2.02165684296529 \\
+                         3    &      2.02098006372809 \\
+ \hline
+\end{tabular}
+\end{center}
+
+\begin{lstlisting}
+function [counter, values] = KeplersEqnLaguerreMethod(M,e,E_0,tol)
+x = E_0;
+i=0;
+n = 4;
+counter = [i];
+values = [x];
+    while abs(fn(M,x,e))>tol
+        if fnp(M,x,e)>0
+            dx = -(n*fn(M,x,e))/(fnp(M,x,e)+sqrt((n-1)^2*(fnp(M,x,e))^2 - n*(n-1)*fn(M,x,e)*fnpp(M,x,e)));
+            i=i+1;
+            x = x+dx;
+        elseif fnp(M,x,e)<0
+            dx = -(n*fn(M,x,e))/(fnp(M,x,e)-sqrt((n-1)^2*(fnp(M,x,e))^2 - n*(n-1)*fn(M,x,e)*fnpp(M,x,e)));
+            i=i+1;
+            x = x+dx; 
+        else
+            dx = 0;
+            i=i+1;
+            x = x+dx; 
+        end
+        counter = [counter; i];
+        values = [values;x];
+    end
+end
+
+%% Background Functions
+
+function f = fn(M,En,e)
+% Evaluate the given function.
+ f = M-(En-e*sin(En));
+end
+
+function fp = fnp(M,En,e)
+% Evaluate the derivative of the given function.
+ fp = -1 + e*cos(En);
+end
+
+function fpp = fnpp(M,En,e)
+% Evaluate the derivative of the given function.
+ fpp = -e*sin(En);
+end
+\end{lstlisting}
+
+\item \textcolor{red}{Repeat parts a) and b) using the starting value of Eq. (2.16)}
+\begin{equation*}
+\begin{aligned}
+E_o = \frac{M(1-\sin u) + u \sin M}{1 + \sin M - \sin u}
+\end{aligned}
+\end{equation*}
+
+Where $u \equiv M + e$. This give us $E_o = 3.06935014444381$. \newline \newline
+Newton
+\begin{center}
+ \begin{tabular}{||c | c||} 
+ \hline
+ Iterations & Eccentric Anomaly Assumption \\ [0.5ex] 
+ \hline\hline
+0      &    3.06935014444381 \\
+                         1      &    2.09352572934448\\
+                         2      &    2.02190453767231\\
+                         3      &    2.02098009603149\\
+ \hline
+\end{tabular}
+\end{center}
+
+Laguerre
+
+\begin{center}
+ \begin{tabular}{||c | c||} 
+ \hline
+ Iterations & Eccentric Anomaly Assumption \\ [0.5ex] 
+ \hline\hline
+0      &    3.06935014444381\\
+                         1    &      2.21917526854539\\
+                         2      &    2.03139126721541\\
+                         3     &     2.02100963487613\\
+ \hline
+\end{tabular}
+\end{center}
+
+\item \textcolor{red}{Calculate the value of $f$, for the solution.}
+
+From before, we found that $E =  2.021 $ [rad]. Using the following equation we can compute $f$ using $E$.
+\begin{equation*}
+\begin{aligned}
+\tan\frac{f}{2} = \sqrt{\frac{1+e}{1-e}} \, \tan \frac{E}{2}
+\end{aligned}
+\end{equation*}
+
+
+\begin{equation*}
+\begin{aligned}
+f = 2.4466 \, [rad]
+\end{aligned}
+\end{equation*}
+
+
+\end{enumerate}
+
+\newpage
+\textbf{Homework Problem 2 Code:} 
+
+\begin{lstlisting}
+%{
+An object is detected by AF Space Command in Colorado Springs. Its position
+and velocity are determined below to be:
+%}
+	% Given
+		r = [-4743;4743;0];
+		v = [-5.879;-4.223;0];
+		mu_E = 3.9860044188e5;
+
+%% Part A: What is the semi-major axis of the object's orbit?
+		a = 1/((-((norm(v))^2/mu_E))+(2/norm(r)))
+
+%% Part B: What is the eccentricity of the orbit?
+		e = sqrt(1-((norm(cross(r,v)))^2/(mu_E*a)))
+
+%% Part C.A: What is the instantaneous true anomaly, f?
+		f = acosd((((a*(1-e^2))/norm(r))-1)/e)
+		r_dot = dot(r,v)/norm(r) %Positive therefore f is positive
+
+%% Part C.B: What is the Instantaneous Mean Anomaly, M?
+		E = acosd((1-(norm(r)/a))/e)
+		M = E - e*sind(E)
+
+%% Part D: How much time (in minutes) will pass between detection of the object and its impact on the earths surface
+		r_impact = 6378
+		n = sqrt(mu_E/a^3)
+
+		f_impact = acos((((a*(1-e^2))/r_impact)-1)/e)
+		E_impact = 2*atan(sqrt((1-e)/(1+e))*tan(f_impact/2))
+		M_impact = E_impact - e*sin(E_impact)
+
+		t = M_impact/n
+		t_min = (t/60)
+%% Part E: What will the speed of the object be at impact?
+		v_impact = sqrt(mu_E*((2/r_impact)-(1/a)))
+\end{lstlisting}
+
+\newpage
+\textbf{Textbook Problem 2.19:} A spacecraft is in an earth orbit having a semi-major axis of 7200 km and eccentricity of 0.06.
+
+\begin{framed}
+\textbf{Constants Defined}
+\begin{equation*}
+\begin{aligned}
+\mu_{\text{Earth}} &= 3.9860044188 \times 10^5 \, [km^3 s^{-2}] \\
+e &= 0.06 \\
+a &= 7200 \, [km]
+\end{aligned}
+\end{equation*}
+\end{framed}
+
+\begin{enumerate}
+\item \textcolor{red}{What is the period of the orbit (in minutes)?}
+
+\begin{equation*}
+\begin{aligned}
+T = 2 \pi \sqrt{\frac{a^3}{\mu_{\text{Earth}}}} = 6080.1 \, \text{[sec]} = 101.3 \, \text{[min]}
+\end{aligned}
+\end{equation*}
+
+\item \textcolor{red}{Find the true anomaly of the spacecraft 60 minutes after it passes perigee. Using the results from (a) what quadrants could the spacecraft be in. }
+
+\begin{enumerate}
+\item Calculate Mean Anomaly
+\begin{equation*}
+\begin{aligned}
+M = \sqrt{\frac{\mu_{\text{Earth}}}{a^3}} \,t \cdot 60 \, \text{sec} = 3.72 \text{[rad]}
+\end{aligned}
+\end{equation*}
+\item Calculate Eccentric Anomaly using Newtons Method. Initial guess, $E_0 = M$ and a tolerance of $10^{-14}$
+\item Calculate True Anomaly
+\begin{equation*}
+\begin{aligned}
+\tan\frac{f}{2} = \sqrt{\frac{1+e}{1-e}} \, \tan \frac{E}{2} \quad \rightarrow \quad f = -2.625 \, \text{[rad]}
+\end{aligned}
+\end{equation*}
+\end{enumerate}
+This result makes since given that a quarter period is around 25 minutes. This means that after 60 minutes, it should be somewhere in the third quadrant. 
+
+\item \textcolor{red}{Using the true anomaly found in (b), find the position vector of the spacecraft 60minutes after it passes perigee. Express the results on the basis vectors shown in Fig. 2.1.}
+
+\begin{enumerate}
+\item Calculate the Semi-Minor Axis
+\begin{equation*}
+\begin{aligned}
+b = a \, \sqrt{1-e^2} = 7187.03 \, \text{[km]}
+\end{aligned}
+\end{equation*}
+\item Calculate Position Vector
+\begin{equation*}
+\begin{aligned}
+r = 
+\begin{bmatrix}
+a \, \cos(E) - e \\
+\frac{b}{a} \, (a \, \sin(E)\\
+0
+\end{bmatrix}
+=
+\begin{bmatrix}
+-6579.82 \\ -3740.82 \\ 0
+\end{bmatrix} \, \text{[km]}
+\end{aligned}
+\end{equation*} 
+\end{enumerate}
+
+\item \textcolor{red}{We have the exact result. Now use the $f$ and $g $ series (2.35) to find (an approximation to) the position vector \textbf{r} of the spacecraft 60minutes after it passes perigee. }
+
+\begin{enumerate}
+\item F and G Series
+\begin{equation*}
+\begin{aligned}
+t &= 60 \, \text{[min]} = 3600 \, \text{[sec]} \\ \\
+r_o &= a\,(1-e) \, \hat{i} = 6768 \, \hat{i} \, \text{[km]}\, \\ \\
+v_o &= \sqrt{\mu_{\text{Earth}}\,\bigg(\frac{2}{r_o}-\frac{1}{a}\bigg)} \, \hat{j} = 7.90 \, \hat{j} \, \text{[km/s]}\\ \\
+H_o &= \frac{\mu_{\text{Earth}}}{r_o^3} = 1.29\times10^{-6}  \, \bigg[\frac{1}{s^2}\bigg]\\ \\
+P_o &= 0 \qquad \text{Because $r_o$ and $v_o$ are perpendicular} \\ 
+\end{aligned}
+\end{equation*}
+\item Calculate Position Vector
+\begin{equation*}
+\begin{aligned}
+\textbf{r} = r_o \,\Bigg(1-\bigg(\frac{t^2}{2}\bigg)\,H_o\Bigg) + v_o\,\Bigg(t - \bigg(\frac{t^3}{6}\bigg)\,H_o\Bigg)
+=
+\begin{bmatrix}
+-49620.7 \\
+-50551.7 \\
+0
+\end{bmatrix} \, \text{[km]}
+\end{aligned}
+\end{equation*} 
+\end{enumerate}
+
+\item \textcolor{red}{How well do the two estimates of \textbf{r} compare?}
+
+The two estimates of r do not show any similarities or proximities to each other. The problem with this approach is that we are expanding our solution around a specific point far from the point we currently know. With this method, it is a known fact that as $t-t_o$ gets larger, the accuracy of our solution will decrease. A solution to this would be to include higher order terms to our series to recover some accuracy however this will come at the expense of computation time and complexities.
+
+\item \textcolor{red}{The series (2.35) becomes less accurate as $(t-t_o)$ increases, because it comes from a Taylor series expansion. In fact, as $(t-t_o)$ increases it will eventually reach a point such that the Taylor series will not converge. To improve the result we will employe a clever trick. \textbf{Use apogee passage to defined the epoch time}. You will need to redefine and determine the epoch position and velocity vectors and the new time elapsed since epoch. Find a new estimate for \textbf{r}.}
+
+\begin{enumerate}
+\item F and G Series
+\begin{equation*}
+\begin{aligned}
+t_{\text{apogee}} &= \frac{\text{Periode}}{2} = 3040.04 \, \text{[sec]} \\ \\
+t_o &= t - t_{\text{apogee}} = 559.96 \, \text{[sec]} \\ \\
+r_o &= a\,(1-e) \, \hat{i} = -7632 \, \hat{i} \, \text{[km]}\, \\ \\
+v_o &= \sqrt{\mu_{\text{Earth}}\,\bigg(\frac{2}{r_o}-\frac{1}{a}\bigg)} \, \hat{j} = -7.01 \, \hat{j} \, \text{[km/s]}\\ \\
+H_o &= \frac{\mu_{\text{Earth}}}{r_o^3} = 8.97\times10^{-7}  \, \bigg[\frac{1}{s^2}\bigg]\\ \\
+P_o &= 0 \qquad \text{Because $r_o$ and $v_o$ are perpendicular} \\ 
+\end{aligned}
+\end{equation*}
+\item Calculate Position Vector
+\begin{equation*}
+\begin{aligned}
+\textbf{r} = r_o \,\Bigg(1-\bigg(\frac{t^2}{2}\bigg)\,H_o\Bigg) + v_o\,\Bigg(t - \bigg(\frac{t^3}{6}\bigg)\,H_o\Bigg)
+=
+\begin{bmatrix}
+-6559.15 \\
+-3739.61 \\
+0
+\end{bmatrix} \, \text{[km]}
+\end{aligned}
+\end{equation*} 
+\end{enumerate}
+
+\item \textcolor{red}{Does this improve the accuracy of the result.}
+
+This estimate gives a much better result when comparing to our results of the position vector from part C. When expanding the taylor series around the apogee we get a much better result since the point we want to find is closer to our known point (position at apogee). In addition, this is likely due to the fact that the quality $t-t_o$ is much smaller than if we had set our t to be at periapsis. Apoapsis and  periapsis  are  good choices for expanding around due to the fact that the velocity and position vectors are orthogonal, thus simplifying our expression.
+\newpage
+\end{enumerate}
+\begin{lstlisting}
+function HW2P3
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part A
+		a = 7200; % Semi-Major Axis [km]
+		e = 0.06; % Eccentricity 
+		mu_earth = 3.9860044188e5; % Standard Gravitational Parameter [km^3/s^2]
+	% Period of an Orbit
+		T_sec = 2*pi*sqrt(a^3/mu_earth); %[sec]
+		T_min = (T_sec/60); % [min]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part B
+		t = 60; % [min]
+		t = t*60; % [sec]
+	% Calculate Mean Anomaly
+		M = sqrt(mu_earth/a^3)*t;
+	% Calculate Eccentric Anomaly using Newtons Method
+		E_0 = M;
+		tol = 10^-14;
+		[iterations, values] = KeplersEqnNewtonMethod(M,e,E_0,tol);
+		E = values(end);
+	% Caclulate True Anomaly
+		f = 2*atan2(tan(E/2),sqrt((1-e)/(1+e)));
+	% Verify Logics
+		T_min/4;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part C: 
+	% Calculate the Semi-Minor Axis
+		b = a*sqrt(1-e^2);
+	% Calculate Position Vector
+		r = [a*(cos(E)-e); (b/a)*(a*sin(E)); 0];
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part D: 
+		t = 60; % [min]
+		t = t*60; % [sec]
+		r_o = [a*(1-e); 0; 0];
+		v_o = [0; sqrt(mu_earth*((2/norm(r_o))-(1/a))); 0];
+		H_o = mu_earth/norm(r_o)^3;
+		P_o = 0;
+		r = r_o*(1-(t^2/2)*H_o) + v_o*(t - (t^3/6)*H_o);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part F: 
+	% Define a new elapsed time past epoch.
+		t_apogee = T_sec/2 %Time at apogee
+		t_o = t - t_apogee
+		r_o = [-a*(1+e); 0; 0]
+		v_o = [0; -sqrt(mu_earth*((2/norm(r_o))-(1/a))); 0]
+		H_o = mu_earth/norm(r_o)^3
+		P_o = 0
+		r = r_o*(1-(t_o^2/2)*H_o) + v_o*(t_o - (t_o^3/6)*H_o)
+end
+\end{lstlisting}
+
+
+\newpage
+\textbf{Textbook Problem 2.11:} An earth-orbiting satellite has a period of 15.743 hr and a perigee radius of 2 earth radii
+\begin{enumerate}
+\item \textcolor{red}{Determine the semi-major axis of the orbit.} \newline
+We know...
+\begin{equation*}
+\begin{aligned}
+\frac{2 \, \pi}{T} = \sqrt{\frac{\mu_{\text{Earth}}}{a^3}} \quad \rightarrow \quad a = \bigg(\frac{\mu_{\text{Earth}}}{\big(\frac{2\,\pi}{T}\big)^2}\bigg)^{\frac{1}{3}} = 31889.86 \, [km]
+\end{aligned}
+\end{equation*}
+\item \textcolor{red}{Determine the position and velocity vectors at perigee}
+\begin{equation*}
+\begin{aligned}
+r_o =
+\begin{bmatrix}
+r_{\text{perigee}}\\
+           0 \\
+           0
+\end{bmatrix}
+=
+\begin{bmatrix}
+12742 \\
+           0 \\
+           0
+\end{bmatrix} \, \text{[km]}
+\qquad \qquad 
+v_o =
+\begin{bmatrix}
+                         0 \\
+\sqrt{\mu_{\text{Earth}} \, \bigg( \frac{2}{r_{\text{perigee}}} - \frac{1}{a}\bigg)} \\
+                         0
+\end{bmatrix}
+=
+\begin{bmatrix}
+                         0 \\
+          7.076 \\
+                         0
+\end{bmatrix} \, \text{[km/s]}
+\end{aligned}
+\end{equation*}
+\item \textcolor{red}{using the f and g functions, eqns. (2.26) and (2.28), find the position vector r
+ letting perigee passage be the epoch time $t_o$}
+
+\begin{enumerate}
+\item Calculate Mean Anomaly
+\begin{equation*}
+\begin{aligned}
+M = \sqrt{\frac{\mu_{\text{Earth}}}{a^3}} \,t \cdot 60 \cdot 60\, \text{sec} = 3.99 \, \text{[rad]}
+\end{aligned}
+\end{equation*}
+
+\item Calculate the Eccentricity
+\begin{equation*}
+\begin{aligned}
+e = 1 - \frac{r_{\text{perigee}}}{a} = 0.60
+\end{aligned}
+\end{equation*}
+
+\item Calculate the Semi-Minor Axis
+\begin{equation*}
+\begin{aligned}
+b = a \, \sqrt{1-e^2} =  25501.43 \, \text{[km]}
+\end{aligned}
+\end{equation*}
+
+\item Calculate Eccentric Anomaly using Newtons Method. Initial guess, $E_0 = M$ and a tolerance of $10^{-14}$. After 4 iterations, the eccentric anomaly is found to be:
+
+\begin{equation*}
+\begin{aligned}
+E = 3.68\, \text{[rad]}
+ \end{aligned}
+\end{equation*}
+
+\item Calculate the f and g functions.
+
+\begin{equation*}
+\begin{aligned}
+f &= 1 - \frac{a}{r_o} \, (1-\cos E) = -3.65\\
+g &= t - \sqrt{\frac{a^3}{\mu_{\text{Earth}}}\,(E-\sin E)} = -1854.62
+ \\ \\
+r &= f \cdot r_o + g \cdot v_o =
+\begin{bmatrix}
+-46491.43 \\
+         -13122.73 \\
+                         0
+\end{bmatrix} \, \text{[km]}
+\end{aligned}
+\end{equation*}
+\end{enumerate}
+
+\end{enumerate}
+
+\begin{lstlisting}
+function HW2P4
+
+T = 15.743; % Period [hr]
+mu_earth = 3.9860044188e5; % Standard Gravitational Parameter km^3/s^2
+R_earth = 6371; % Radius of Earth [km]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part A: Determine the semimajor axis of the orbit
+		T = T*60*60; % Period [sec]
+		r_perigee = 2*R_earth; % Radius at perigee [km]
+	% Semi-Major Axis
+		a = (mu_earth/((2*pi)/(T))^2)^(1/3);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part A': Determine the position and velocity vectors at perigee
+		r_o = [r_perigee; 0; 0]
+		v_o = [0; sqrt(mu_earth*((2/r_perigee)-(1/a))); 0]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Part B: Determine the position and velocity vectors after perigee
+		t = 10;% Perigee Passage [hr]
+		t = t*60*60;% Perigee Passage [sec]
+	% Calculate Mean Anomaly
+		M = sqrt(mu_earth/a^3)*t;
+	% Calculate Eccentricity
+		e = 1-(r_perigee/a);
+	% Calculate the Semi-Minor Axis
+		b = a*sqrt(1-e^2);
+	% Calculate Eccentric Anomaly using Newtons Method
+		E_0 = M;
+		tol = 10^-14;
+		[iterations, values] = KeplersEqnNewtonMethod(M,e,E_0,tol);
+		E = values(end);
+	% Calculate f and g functions (E_o = 0 b/c at perigee)
+		f = 1 - (a/norm(r_o))*(1-cos(E));
+		g = t-sqrt(a^3/mu_earth)*(E-sin(E));
+		r = f*r_o + g*v_o
+end
+\end{lstlisting}
+
+\end{document}
