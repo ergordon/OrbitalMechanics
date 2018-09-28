@@ -1,8 +1,13 @@
+function AE402HW3()
 format long g
 
+P2()
+end
+
+function P1()
 rr = [6045; 3490; 0];
 vv = [-2.457; 6.618; 2.533];
-mu = 3.986004418e5; %Standard Graviational Parameter m^3 s^-2
+mu = 3.986004418e5; %Standard Graviational Parameter km^3 s^-2
 
 %% Calculate Semi Major Axis
 r = norm(rr)
@@ -49,4 +54,35 @@ elseif dot(rr,vv) < 0
     f0 = 2*pi - acos(dot(ee,rr)/(e*r))
 end
     
-RVtoOM(rr,vv, mu, 0);
+end
+
+function P2
+a = 1.1*6378;
+e = 0.05;
+i = 45;
+RAAN = 0;
+w = 20;
+f = 10;
+rd = 1;
+mu = 3.986004418e5;
+
+[rr,vv] = OMtoRV(mu,a,e,i,RAAN,w,f, rd)
+
+
+r = norm(rr)
+l  = rr(1)/r 
+m = rr(2)/r 
+n =rr(3)/r        % Direction cosines
+
+delta = asind(n);                    % Declination
+% Right ascension:
+if (m >0)
+    alpha = acosd(l/cosd(delta));
+else
+    alpha = 360 - acosd(l/cosd(delta));
+end
+fprintf('Right ascension = %4.2f [deg] \n',alpha);
+fprintf('Declination = %4.2f [deg] \n',delta);
+fprintf('Right ascension = %4.2f [rad] \n',deg2rad(alpha));
+fprintf('Declination = %4.2f [rad] \n',deg2rad(delta));
+end
