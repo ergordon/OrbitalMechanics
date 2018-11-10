@@ -1,6 +1,7 @@
 function HW5
     clc; clear;
-    P4
+    AE442
+   
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -166,8 +167,16 @@ mu = 3.986e5; % Standard Gravitation of Earth [km^3/s^2]
 r1 = 6567; % Earth Semi-Major Axis [km]
 r2 = 42160; % Mars Semi-Major Axis [km]
 mu = 0.042828e6; % Standard Gravitation of Mars [km^3/s^2]
+mo = 10.001712; % Initial Mass [kg]
 
-[a_H,t_H,dv_1, dv_2, dv_tot] = HohmannTransfer(r1,r2,mu);
+[a_H,t_H,dv_1, dv_2, dv_totM] = HohmannTransfer(r1,r2,mu);
 
+syms mf real
+Isp = 220;
 
+mf = vpa(solve(dv_totM*1000 == Isp*9.81*log(mo/mf),mf))
+mp = mo-mf
+
+rho = 795;
+r = vpa(100*((mp/rho)/((4/3)*pi))^(1/3));
 end

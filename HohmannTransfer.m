@@ -1,4 +1,22 @@
 function [a_H,t_H,dv_1, dv_2, dv_tot] = HohmannTransfer(r1,r2,mu)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Calculate Hohmann Transfer
+%
+% This function takes in the following inputs:
+%         r1 = radius of departure
+%         r2 = radius at arrival
+%         mu = Standard Graviational Parameter [km^3/s^2]
+% 
+% This function outputs the following:
+%         a_H = Hohmann transfer orbit semi-major axis.
+%         t_H = Transfer time
+%         dv1 = Delta V to get into transfer orbit
+%         dv2 = Delta V to get into final orbit
+%       dvTot = Total Delta V
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 a_H = (r1+r2)/2;
 t_H = pi*sqrt((a_H^3)/mu);
 
